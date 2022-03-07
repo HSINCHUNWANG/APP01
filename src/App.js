@@ -1,25 +1,25 @@
-import logo from './logo.svg';
 import './App.css';
 import { useEffect, useState } from 'react';
 import config from './Config';
+import { useHistory, useLocation } from 'react-router-dom';
 
 function App() {
+  const history = useHistory();
+  const location = useLocation();
   const [data, setData] = useState({});
 
-
-  const getData = async (page=1)=>{
+  const getData = async (page)=>{
     const obj = await (await fetch(config.AB_LIST + `?page=${page}`)).json();
-
     console.log(obj);
     setData(obj);
   };
 
-
   useEffect(()=>{
-    getData();
-  }, []);
-
-  console.log(data);
+    const usp = new URLSearchParams(location.search);
+    const page = parseInt(usp.get('page'));
+    console.log({page});
+    getData(page || 1);
+  }, [location.search]);
 
   const renderMe = (data)=>{
     if(data.rows && data.rows.length){
@@ -33,7 +33,7 @@ function App() {
         </tr>)
       )
     } else {
-      return (<tr><td></td></tr>);
+      return null;
     }
   };
 
@@ -44,17 +44,23 @@ function App() {
       { (data.rows && data.rows.length) ? 
         (<nav aria-label="Page navigation example">
           <ul className="pagination">
-            <li className="page-item">
-              <a className="page-link" href="#/" onClick={()=>{getData(data.page-1)}}>Previous</a>
+            <li className={data.page===1 ? 'page-item disabled' : 'page-item'}>
+              <button className="page-link" onClick={()=>{
+                history.push(`?page=${data.page-1}`);
+                }}>Previous</button>
             </li>
             {  Array(data.totalPages).fill(1).map((el, i)=>(
               <li className={data.page===i+1 ? 'page-item active' : 'page-item'} key={'pageLi'+i}>
-                <a className="page-link" href="#/" onClick={()=>{getData(i+1)}}>{i+1}</a>
+                <button className="page-link" onClick={()=>{
+                  history.push(`?page=${i+1}`);
+                  }}>{i+1}</button>
               </li>
               ))  
             }
-            <li className="page-item">
-              <a className="page-link" href="#/" onClick={()=>{getData(data.page+1)}}>Next</a>
+            <li className={data.page===data.totalPages ? 'page-item disabled' : 'page-item'}>
+              <button className="page-link" href="#/" onClick={()=>{
+                history.push(`?page=${data.page+1}`);
+                }}>Next</button>
             </li>
           </ul>
         </nav>)
